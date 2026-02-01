@@ -11,12 +11,8 @@ import {
   Check,
   Send,
   Code,
-  ExternalLink,
   X,
-  Sparkles,
   Gauge,
-  MessageSquareText,
-  Stethoscope,
 } from 'lucide-react'
 
 const API_URL = 'http://localhost:8000'
@@ -33,9 +29,6 @@ interface AnalysisResult {
 }
 
 type AnalysisStatus = 'idle' | 'analyzing' | 'complete' | 'error'
-
-const cleanStep = (step: string) =>
-  step.replace(/^[🚀🔍📚🧠✓✅⚠🚨⏭❌⏳]\s*/g, '').trim()
 
 const loadingSteps = [
   'Reading ticket',
@@ -117,197 +110,177 @@ export default function AgentInsightPanel({
   }
 
   return (
-    <div
-      className="w-[1400px] max-w-[95vw] rounded-2xl overflow-hidden"
-      style={{
-        background: 'rgba(15,15,24,0.92)',
-        border: '1px solid rgba(168,85,247,0.25)',
-        backdropFilter: 'blur(14px)',
-        boxShadow: '0 0 60px rgba(168,85,247,0.2)',
-      }}
-    >
-      {/* Header */}
+    /* 🔥 FULLSCREEN SAFE WRAPPER */
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-6 overflow-auto">
       <div
-        className="flex items-center justify-between px-5 py-4"
+        className="
+          w-full
+          max-w-[90vw]
+          min-w-[600px]
+          max-h-[90vh]
+          rounded-2xl
+          overflow-auto
+          bg-gradient-to-b
+          from-[rgba(15,15,25,0.92)]
+          to-[rgba(5,5,10,0.96)]
+          border
+          border-[rgba(168,85,247,0.35)]
+          backdrop-blur-[26px]
+          shadow-[0_0_0_1px_rgba(168,85,247,0.18),0_30px_80px_rgba(0,0,0,0.85),0_0_120px_rgba(168,85,247,0.35)]
+        "
         style={{
-          borderBottom: '1px solid rgba(168,85,247,0.2)',
-          background: 'rgba(255,255,255,0.03)',
+          WebkitBackdropFilter: 'blur(26px)',
         }}
       >
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
-            style={{
-              background: '#7c3aed',
-              boxShadow: '0 0 20px rgba(168,85,247,0.5)',
-            }}
-          >
-            <Brain className="w-5 h-5 text-white" />
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-6 py-5"
+          style={{
+            borderBottom: '1px solid rgba(168,85,247,0.25)',
+            background: 'rgba(255,255,255,0.04)',
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center"
+              style={{
+                background: '#7c3aed',
+                boxShadow: '0 0 25px rgba(168,85,247,0.55)',
+              }}
+            >
+              <Brain className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="text-base font-bold text-violet-100">
+                Agent Analysis
+              </p>
+              <p className="text-xs text-violet-300">
+                AI-powered diagnostics
+              </p>
+            </div>
           </div>
-          <div>
-            <p style={{ color: '#ede9fe', fontWeight: 700 }}>Agent Analysis</p>
-            <p style={{ color: '#a78bfa', fontSize: '12px' }}>
-              AI-powered diagnostics
-            </p>
-          </div>
+
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 rounded-lg text-violet-300 hover:bg-white/5"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
-        {onClose && (
-          <button onClick={onClose} style={{ color: '#c4b5fd' }}>
-            <X className="w-5 h-5" />
-          </button>
-        )}
-      </div>
+        {/* Content */}
+        <div className="p-6 md:p-8 space-y-8 text-violet-100">
+          {status === 'analyzing' && (
+            <div className="space-y-6 py-10">
+              <Loader2 className="w-9 h-9 mx-auto animate-spin text-violet-400" />
+              {loadingSteps.map((s, i) => (
+                <div key={i} className="flex items-center gap-4 text-sm">
+                  <div
+                    className="w-3 h-3 rounded-full"
+                    style={{
+                      background:
+                        i <= step ? '#a78bfa' : 'rgba(168,85,247,0.2)',
+                    }}
+                  />
+                  <span
+                    className={
+                      i === step ? 'text-violet-100' : 'text-violet-300'
+                    }
+                  >
+                    {s}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
 
-      <div className="p-6" style={{ color: '#e9d5ff' }}>
-        {status === 'analyzing' && (
-          <div className="space-y-4 py-8">
-            <Loader2 className="w-8 h-8 mx-auto animate-spin" style={{ color: '#a78bfa' }} />
-            {loadingSteps.map((s, i) => (
-              <div key={i} className="flex items-center gap-3 text-sm">
-                <div
-                  style={{
-                    width: 12,
-                    height: 12,
-                    borderRadius: '50%',
-                    background:
-                      i <= step ? '#a78bfa' : 'rgba(168,85,247,0.2)',
-                  }}
+          {status === 'error' && (
+            <div className="text-center space-y-4 py-10">
+              <AlertCircle className="w-12 h-12 mx-auto text-red-400" />
+              <p className="text-sm text-red-400">{error}</p>
+            </div>
+          )}
+
+          {status === 'complete' && result && (
+            <>
+              {/* Confidence */}
+              <div className="flex flex-col md:flex-row gap-6 md:items-center md:justify-between rounded-xl p-6 bg-white/5 border border-violet-500/30">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-2xl bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-600/40">
+                    <Gauge className="w-7 h-7 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-violet-300">Confidence Score</p>
+                    <p className="text-3xl font-extrabold text-violet-100">
+                      {Math.round(result.confidence_score * 100)}%
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg px-4 py-3 bg-black/40 border border-violet-500/30">
+                  <p className="text-xs text-violet-300">Merchant ID</p>
+                  <p className="font-mono text-sm">
+                    {result.merchant_id || 'N/A'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Diagnosis */}
+              <div className="rounded-xl p-7 bg-white/5 border border-violet-500/30">
+                <p className="font-bold mb-4">Diagnosis</p>
+                <div className="prose prose-invert max-w-none text-sm">
+                  <ReactMarkdown>{result.diagnosis}</ReactMarkdown>
+                </div>
+              </div>
+
+              {/* Recommended Action */}
+              <div className="rounded-xl p-7 bg-white/5 border border-violet-500/30">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="font-bold">Recommended Action</p>
+                  <button onClick={copyReply}>
+                    {copied ? <Check /> : <Copy />}
+                  </button>
+                </div>
+
+                <textarea
+                  value={reply}
+                  onChange={e => setReply(e.target.value)}
+                  className="
+                    w-full
+                    min-h-[280px]
+                    rounded-xl
+                    bg-black/50
+                    border border-violet-500/30
+                    p-4
+                    text-violet-100
+                    outline-none
+                  "
                 />
-                <span style={{ color: i === step ? '#ede9fe' : '#a78bfa' }}>
-                  {s}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
 
-        {status === 'error' && (
-          <div className="text-center space-y-3 py-8">
-            <AlertCircle className="w-10 h-10 mx-auto text-red-400" />
-            <p className="text-sm text-red-400">{error}</p>
-          </div>
-        )}
+                <div className="mt-6 flex flex-wrap gap-4">
+                  <button
+                    onClick={() =>
+                      openInVSCode(
+                        '/Users/arhaanbhiwandkar/Desktop/random projects/notesportal3.0'
+                      )
+                    }
+                    className="px-5 py-3 rounded-xl border border-violet-500/40 text-violet-300 hover:bg-white/5"
+                  >
+                    <Code className="inline mr-2" />
+                    Open in VS Code
+                  </button>
 
-        {status === 'complete' && result && (
-          <div className="space-y-6">
-            {/* Confidence */}
-            <div
-              className="flex items-center justify-between p-5 rounded-2xl"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(168,85,247,0.25)',
-              }}
-            >
-              <div className="flex items-center gap-4">
-                <div
-                  className="w-14 h-14 rounded-2xl flex items-center justify-center"
-                  style={{
-                    background: '#7c3aed',
-                    boxShadow: '0 0 20px rgba(168,85,247,0.5)',
-                  }}
-                >
-                  <Gauge className="w-7 h-7 text-white" />
-                </div>
-                <div>
-                  <p style={{ fontSize: 12, color: '#a78bfa' }}>
-                    Confidence Score
-                  </p>
-                  <p style={{ fontSize: 28, fontWeight: 800, color: '#ede9fe' }}>
-                    {Math.round(result.confidence_score * 100)}%
-                  </p>
+                  <button className="px-6 py-3 rounded-xl border border-violet-500/60 text-violet-100 hover:bg-white/5">
+                    <Send className="inline mr-2" />
+                    Send Reply
+                  </button>
                 </div>
               </div>
-
-              <div
-                style={{
-                  padding: '8px 14px',
-                  borderRadius: 10,
-                  background: 'rgba(0,0,0,0.3)',
-                  border: '1px solid rgba(168,85,247,0.25)',
-                }}
-              >
-                <p style={{ fontSize: 12, color: '#a78bfa' }}>Merchant ID</p>
-                <p style={{ fontFamily: 'monospace', color: '#ede9fe' }}>
-                  {result.merchant_id || 'N/A'}
-                </p>
-              </div>
-            </div>
-
-            {/* Diagnosis */}
-            <div
-              className="p-6 rounded-2xl"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(168,85,247,0.25)',
-              }}
-            >
-              <p style={{ fontWeight: 700, marginBottom: 10 }}>Diagnosis</p>
-              <div className="prose prose-invert max-w-none text-sm">
-                <ReactMarkdown>{result.diagnosis}</ReactMarkdown>
-              </div>
-            </div>
-
-            {/* Recommended Action */}
-            <div
-              className="p-6 rounded-2xl"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(168,85,247,0.25)',
-              }}
-            >
-              <div className="flex justify-between items-center mb-3">
-                <p style={{ fontWeight: 700 }}>Recommended Action</p>
-                <button onClick={copyReply}>
-                  {copied ? <Check /> : <Copy />}
-                </button>
-              </div>
-
-              <textarea
-                value={reply}
-                onChange={e => setReply(e.target.value)}
-                style={{
-                  width: '100%',
-                  minHeight: 260,
-                  background: 'rgba(0,0,0,0.4)',
-                  border: '1px solid rgba(168,85,247,0.25)',
-                  borderRadius: 12,
-                  padding: 16,
-                  color: '#ede9fe',
-                }}
-              />
-
-              <div className="mt-5 flex gap-4">
-                <button
-                  onClick={() =>
-                    openInVSCode('/Users/arhaanbhiwandkar/Desktop/random projects/notesportal3.0')
-                  }
-                  style={{
-                    border: '1px solid rgba(168,85,247,0.3)',
-                    borderRadius: 12,
-                    padding: '10px 16px',
-                    color: '#c4b5fd',
-                  }}
-                >
-                  <Code className="inline mr-2" />
-                  Open in VS Code
-                </button>
-
-                <button
-                  style={{
-                    border: '1px solid rgba(168,85,247,0.4)',
-                    borderRadius: 12,
-                    padding: '10px 20px',
-                    color: '#ede9fe',
-                  }}
-                >
-                  <Send className="inline mr-2" />
-                  Send Reply
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
