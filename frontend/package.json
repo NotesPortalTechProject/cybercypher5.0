@@ -15,5 +15,8 @@
     "react-dom": "18.2.0",
     "react-markdown": "^10.1.0",
     "tailwindcss": "^4.1.18"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.18"
   }
 }
